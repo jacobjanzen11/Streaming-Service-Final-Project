@@ -21,10 +21,10 @@ class TestTable(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
 
-def connect_tcp_socket() -> sqlalchemy.engine.base.Engine:
+def connect_tcp_socket(password) -> sqlalchemy.engine.base.Engine:
     db_host = os.environ["DB_HOST"] = "round-gasket-405922:us-west1:music-streaming-app"
     db_user = os.environ["DB_USER"] = "root"  
-    db_pass = os.environ["DB_PASS"] = "Jifgev-dufmu8-tuzzug"
+    db_pass = os.environ["DB_PASS"] = password
     db_port = os.environ["DB_PORT"] = "3306"
     db_name = os.environ["DB_NAME"] = "music_db"
 
@@ -61,4 +61,5 @@ def connect_tcp_socket() -> sqlalchemy.engine.base.Engine:
 
     return engine
 
-connect_tcp_socket()
+password = input("\n\nEnter your pw to connect to the DB\npw: ")
+connect_tcp_socket(password)
