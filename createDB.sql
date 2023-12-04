@@ -51,6 +51,13 @@ create table `User` (
     primary key (ID)
 );
 
+-- this table specifies what each user is listening to so friends can see what their friends are listening to -- This table is sepate from User and sorted by user.ID to make searching easier
+create table `Listen Now` (
+    `userID` int, -- foreign key to User.ID
+    `songID` int, -- foreign key to Song.ID
+    primary key (userID)
+)
+
 -- this holds the data of what artists each user follows
 create table `Follow Artist` ( 
     `artist` int, -- foreign key to artist.ID
@@ -88,6 +95,11 @@ add foreign key (album) references Album(ID);
 
 alter table album
 add foreign key (artist) references artist(ID);
+
+alter table `Listen Now`
+add foreign key (userID) references User(ID);
+alter table `Listen Now`
+add foreign key (songID) references Song(ID);
 
 alter table `Follow Artist`
 add foreign key (artist) references Artist(ID);
