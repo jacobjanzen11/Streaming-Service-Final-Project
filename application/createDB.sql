@@ -82,6 +82,7 @@ create table `Playlist` (
 create table `Owned` (
     `userID` int, -- foreign key to User.ID
     `playlistID` int, -- foreign key to Playlist.ID
+    `name` varchar(255), -- the name of the playlist
     primary key (userID, playlistID)
 );
 
