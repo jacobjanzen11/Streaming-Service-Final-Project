@@ -44,7 +44,7 @@ create table `Artist` (
 
 create table `User` (
     `ID` int,
-    `username` varchar(255),
+    `uname` varchar(255),
     `password` varchar(255),
     `name` varchar(255),
     `dateJoin` datetime,
@@ -63,6 +63,12 @@ create table `Follow Artist` (
     `artist` int, -- foreign key to artist.ID
     `user` int, -- foreign key to user.ID
     primary key (artist, user)
+);
+
+create table `Follow Album` (
+    `album` int, -- foreign key to Album.ID
+    `user` int, -- foreign key to User.ID
+    primary key (album, user)
 );
 
 create table `Friend` (
@@ -105,6 +111,11 @@ add foreign key (songID) references Song(ID);
 alter table `Follow Artist`
 add foreign key (artist) references Artist(ID);
 alter table `Follow Artist`
+add foreign key (user) references User(ID);
+
+alter table `Follow Album`
+add foreign key (album) references Album(ID);
+alter table `Follow Album`
 add foreign key (user) references User(ID);
 
 alter table Friend
