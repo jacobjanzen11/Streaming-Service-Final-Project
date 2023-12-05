@@ -77,7 +77,7 @@ def load_user(user_id):
 # update this route to whatever link homepage should be
 @app.route('/')
 def home():
-    return render_template('index.html', songs=songs)
+    return render_template('..UI/index.html')
 
 
 # example of potential route to song for testing purposes
