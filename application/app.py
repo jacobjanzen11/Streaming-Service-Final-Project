@@ -12,6 +12,7 @@ from flask import Flask, render_template, send_file, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash
+import os
 
 
 app = Flask(__name__)
@@ -30,6 +31,18 @@ def protect_db():
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    
+# Function to execute the SQL script for creating tables
+def create_database_tables():
+    with app.app_context():
+        # Read the SQL script from the file
+        script_path = 'application/createDB.sql'
+        with open(script_path, 'r') as script_file:
+            script = script_file.read()
+
+        # Execute the SQL script
+        db.engine.execute(script)
 
 # ask user for login credentials for db connection
 protect_db()
@@ -49,22 +62,21 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# example of table for testing purposes
-class Song(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    artist = db.Column(db.String(255), nullable=False)
+# # example of table for testing purposes
+# class Song(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     title = db.Column(db.String(255), nullable=False)
+#     artist = db.Column(db.String(255), nullable=False)
     
 
-with app.app_context():
-    # calls function to create tables within the app instance
-    db.create_all()
+# with app.app_context():
+#     # calls function to create tables within the app instance
+#     db.create_all()
 
 
 # update this route to whatever link homepage should be
 @app.route('/')
 def home():
-    songs = Song.query.all()
     return render_template('index.html', songs=songs)
 
 
@@ -75,7 +87,7 @@ def stream(filename):
     return send_file(audio_file_path, as_attachment=True)
 
 
-# added login functionality using Flask package, HTML can be updated
+# added login functionality using Flask package, HTML can be updated,
 # left actual categories and design with placeholders
 @app.route('/login')
 def login():
