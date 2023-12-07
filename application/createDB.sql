@@ -49,7 +49,7 @@ create table `Artist` (
 );
 
 create table `User` (
-    `ID` int,
+    `ID` int AUTO_INCREMENT,
     `uname` varchar(255),
     `password` varchar(255),
     `name` varchar(255),
