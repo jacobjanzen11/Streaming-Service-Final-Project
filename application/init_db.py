@@ -11,10 +11,24 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect
+from getpass import getpass
+
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://username:password@localhost/music'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+def protect_db():
+    username = input("\nEnter DB Username: ")
+    password = getpass("\nEnter DB Password: ")
+    host = input("\nEnter DB Host Name: ")
+    db_path = input("\nEnter name of DB: ")
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+            
+
+# ask user for login credentials for db connection
+protect_db()
+db = SQLAlchemy(app)
 
 db = SQLAlchemy(app)
 
