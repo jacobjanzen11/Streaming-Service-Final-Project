@@ -12,48 +12,76 @@ from flask import Flask, render_template, send_file, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash
+from getpass import getpass
 import os
 
 
 app = Flask(__name__)
 
-secret_key = input("\nEnter Your Secret Key: ")
-app.config['SECRET_KEY'] = secret_key 
+# secret_key = input("\nEnter Your Secret Key: ")
+# app.config['SECRET_KEY'] = secret_key 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 
 def protect_db():
-    username = input("\nEnter DB Username: ")
-    password = input("\nEnter DB Password: ")
-    host = input("\nEnter DB Host Name: ")
-    db_path = input("\nEnter name of DB: ")
+    username = "jacobjanzen11"#input("\nEnter DB Username: ")
+    password = "!4WeLoveJesus!"#getpass("\nEnter DB Password: ")
+    host = "localhost"#input("\nEnter DB Host Name: ")
+    db_path = "music"#input("\nEnter name of DB: ")
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    #pass
+    
+
     
     
 # Function to execute the SQL script for creating tables
-def create_database_tables():
+# def create_database_tables():
+#     with app.app_context():
+#         # Read the SQL script from the file
+#         script_path = 'application/createDB.sql'
+#         with open(script_path, 'r') as script_file:
+#             script = script_file.read()
+
+#         # Execute the SQL script
+#         db.engine.execute(script)
+
+
+def execute_sql_script(script_path):
     with app.app_context():
-        # Read the SQL script from the file
-        script_path = 'application/createDB.sql'
         with open(script_path, 'r') as script_file:
             script = script_file.read()
 
-        # Execute the SQL script
-        db.engine.execute(script)
+        # Explicitly declare the script as text
+        text_script = db.text(script)
+
+        try:
+            # Execute the SQL script
+            db.session.execute(text_script)
+            # Commit the changes
+            db.session.commit()
+        except Exception as e:
+            # Rollback changes in case of an exception
+            db.session.rollback()
+            raise e
+            # db.session shoulf close automatically
+            
 
 # ask user for login credentials for db connection
 protect_db()
 db = SQLAlchemy(app)
 
+execute_sql_script('application/createDB.sql')
 
 # User model for Flask-Login
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    dateJoin = db.Column(db.DateTime)
 
 
 # Initialize Flask-Login
