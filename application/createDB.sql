@@ -10,6 +10,12 @@
 
 USE music;
 
+DROP SCHEMA music;
+
+CREATE SCHEMA music;
+
+USE music;
+
 
 -- create all tables first
 
@@ -56,7 +62,7 @@ create table `Listen Now` (
     `userID` int, -- foreign key to User.ID
     `songID` int, -- foreign key to Song.ID
     primary key (userID)
-)
+);
 
 -- this holds the data of what artists each user follows
 create table `Follow Artist` ( 
@@ -78,16 +84,16 @@ create table `Friend` (
 );
 
 create table `Playlist` (
-    `ID` int, -- KEY
+    `ID` int,
     `SongID` int, -- foreign key to Song.ID
     `Order` int, -- the order of the song in the playlist
-    primary key (ID)
+    primary key (ID, SongID)
 );
 
 -- holds the data of which user owns which playlist
 create table `Owned` (
     `userID` int, -- foreign key to User.ID
-    `playlistID` int, -- foreign key to Playlist.ID
+    `playlistID` int, 
     `name` varchar(255), -- the name of the playlist
     primary key (userID, playlistID)
 );
@@ -128,7 +134,79 @@ add foreign key (songID) references Song(ID);
 
 alter table Owned
 add foreign key (userID) references User(ID);
-alter table Owned
-add foreign key (playlistID) references Playlist(ID);
 
 -- adding all data to tables
+
+insert into `Artist` values (
+    1,
+    "Example Artist",
+    1000000,
+    '2023-12-7 0:00:00'
+);
+
+insert into `Album` values (
+    1,
+    "Example Album",
+    1,
+    '2023-12-7 0:00:00'
+);
+
+insert into `Song` values (
+    1,
+    "Song number 1",
+    1,
+    1,
+    '2023-12-7 0:00:00',
+    "pop",
+    1234,
+    187,
+    "https://open.spotify.com/embed/track/1hQFF33xi8ruavZNyovtUN?utm_source=generator"
+);
+
+insert into `User` values (
+    1,
+    "uname1",
+    "pass1",
+    "Person One",
+    '2023-12-7 0:00:00'
+);
+
+insert into `User` values (
+    2,
+    "uname2",
+    "pass2",
+    "Person Two",
+    '2023-12-7 0:00:00'
+);
+
+insert into `Listen Now` values (
+    2,
+    1
+);
+
+insert into `Follow Artist` values ( 
+    1,
+    1
+);
+
+insert into `Follow Album` values (
+    1,
+    1
+);
+
+insert into `Friend` values (
+    1,
+    2
+);
+
+insert into `Playlist` values (
+    1,
+    1,
+    1
+);
+
+insert into `Owned` values (
+    1,
+    1,
+    "Example Playlist"
+);
