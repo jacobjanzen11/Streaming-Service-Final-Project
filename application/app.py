@@ -11,6 +11,7 @@
 from flask import Flask, render_template, send_file, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from sqlalchemy import inspect
 from werkzeug.security import check_password_hash
 from getpass import getpass
 import os
@@ -32,48 +33,11 @@ def protect_db():
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    #pass
-    
-
-    
-    
-# Function to execute the SQL script for creating tables
-# def create_database_tables():
-#     with app.app_context():
-#         # Read the SQL script from the file
-#         script_path = 'application/createDB.sql'
-#         with open(script_path, 'r') as script_file:
-#             script = script_file.read()
-
-#         # Execute the SQL script
-#         db.engine.execute(script)
-
-
-def execute_sql_script(script_path):
-    with app.app_context():
-        with open(script_path, 'r') as script_file:
-            script = script_file.read()
-
-        # Explicitly declare the script as text
-        text_script = db.text(script)
-
-        try:
-            # Execute the SQL script
-            db.session.execute(text_script)
-            # Commit the changes
-            db.session.commit()
-        except Exception as e:
-            # Rollback changes in case of an exception
-            db.session.rollback()
-            raise e
-            # db.session shoulf close automatically
             
 
 # ask user for login credentials for db connection
 protect_db()
 db = SQLAlchemy(app)
-
-execute_sql_script('application/createDB.sql')
 
 # User model for Flask-Login
 class User(UserMixin, db.Model):
@@ -88,18 +52,6 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
-# # example of table for testing purposes
-# class Song(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(255), nullable=False)
-#     artist = db.Column(db.String(255), nullable=False)
-    
-
-# with app.app_context():
-#     # calls function to create tables within the app instance
-#     db.create_all()
 
 
 # update this route to whatever link homepage should be
@@ -122,6 +74,7 @@ def stream(filename):
 def login():
     return render_template('login.html')
 
+
 @app.route('/login', methods=['POST'])
 def login_post():
     username = request.form.get('username')
@@ -135,11 +88,13 @@ def login_post():
     
     return redirect(url_for('login'))
 
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
 
 # if main, run app with debug
 if __name__ == '__main__':
