@@ -129,7 +129,6 @@ def login_post():
         if user and check_password_hash(user.password, password):
             app.logger.info(f"User object: {user.__dict__}")
             login_user(user)
-            flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
             app.logger.warning("Login credentials are invalid.")
@@ -141,7 +140,7 @@ def login_post():
         return redirect(url_for('login'))
     
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
