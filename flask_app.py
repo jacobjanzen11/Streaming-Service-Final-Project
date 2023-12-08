@@ -30,10 +30,10 @@ login_manager.login_view = 'login'
 
 
 def protect_db():
-    username = "jacobjanzen11"#input("\nEnter DB Username: ")
-    password = "!4WeLoveJesus!"#getpass("\nEnter DB Password: ")
-    host = "localhost"#input("\nEnter DB Host Name: ")
-    db_path = "music"#input("\nEnter name of DB: ")
+    username = input("\nEnter DB Username: ")
+    password = getpass("\nEnter DB Password: ")
+    host = input("\nEnter DB Host Name: ")
+    db_path = input("\nEnter name of DB: ")
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -145,11 +145,11 @@ def login_post():
             else:
                 app.logger.warning("Login credentials are invalid.")
                 flash('Invalid username or password', 'danger')
-                return redirect(url_for('login'))
+                return redirect(url_for('home'))
         except Exception as e:
             app.logger.error(f"Error during login: {str(e)}")
             flash(f'An error occurred while logging in: {str(e)}', 'danger')
-            return redirect(url_for('login'))
+            return redirect(url_for('home'))
     else:
         return redirect(url_for('home'))
     

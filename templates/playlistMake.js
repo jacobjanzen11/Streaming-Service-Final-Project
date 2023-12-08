@@ -3,9 +3,9 @@ songNames = ["Thunder", "Rawr", "Yup", "FSU Fight Song", "National Anthem"]
 
 //basic song object
 function SongObject(songName, artist, indexNum) {
-        this.songName = songName;
-        this.artist = artist;
-        this.indexNum = indexNum;
+  this.songName = songName;
+  this.artist = artist;
+  this.indexNum = indexNum;
 } 
 //use a for loop to make song object array
 //var song1 = new SongObject("Sams Song", "Jason", 1);
