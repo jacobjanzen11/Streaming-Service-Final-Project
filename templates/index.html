@@ -8,7 +8,7 @@
     integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
   <title>Streaming Service</title>
 
-  <style>
+  <!-- <style>
     .bg-custom {
       background-color: #39a7ff;
     }
@@ -25,6 +25,73 @@
     .btn {
       background-color: white;
       color: #39a7ff;
+    }
+  </style> -->
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      /* Dark background similar to Spotify */
+      color: #ffffff;
+      /* Light text color */
+    }
+  
+    .navbar {
+      background-color: #000000;
+      /* Dark navbar background */
+      box-shadow: 0 4px 2px -2px gray;
+    }
+  
+    .navbar-brand img {
+      filter: brightness(0) invert(1);
+    }
+  
+    .navbar-light .navbar-nav .nav-link {
+      color: #ffffff;
+    }
+  
+    .btn-outline-success:hover {
+      background-color: #1db954;
+      /* Spotify green */
+      color: #ffffff;
+    }
+  
+    .btn {
+      background-color: #1db954;
+      /* Spotify green */
+      color: white;
+    }
+  
+    h1,
+    h2,
+    h3,
+    p {
+      color: #ffffff;
+    }
+  
+    /* Customize card styles for a Spotify-like UI */
+    .card {
+      background-color: #181818;
+      /* Dark card background */
+      color: #ffffff;
+      border: none;
+      transition: transform 0.3s ease-in-out;
+    }
+  
+    .card:hover {
+      transform: scale(1.05);
+    }
+  
+    .card img {
+      max-height: 200px;
+      /* Adjust as needed */
+      object-fit: cover;
+    }
+  
+    /* Media Query for responsiveness */
+    @media (max-width: 768px) {
+      /* Adjust styles for smaller screens */
     }
   </style>
 
