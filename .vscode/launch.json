@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Open index.html",
-            "file": "/Users/jacobjanzen/Desktop/Fall_23/Database Management/Streaming-Service-Final-Project/application/index.html"
+            "file": "/Users/jacobjanzen/Desktop/Fall_23/Database Management/Streaming-Service-Final-Project/templates/index.html"
         }
     ]
 }

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+  <title>Streaming Service</title>
+
+  <!-- <style>
+    .bg-custom {
+      background-color: #39a7ff;
+    }
+
+    .navbar-light .navbar-nav .nav-link {
+      color: #e0f4ff;
+    }
+
+    .btn-outline-success:hover {
+      background-color: #e0f4ff;
+      color: #39a7ff;
+    }
+
+    .btn {
+      background-color: white;
+      color: #39a7ff;
+    }
+  </style> -->
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #121212;
+      /* Dark background similar to Spotify */
+      color: #ffffff;
+      /* Light text color */
+    }
+  
+    .navbar {
+      background-color: #000000;
+      /* Dark navbar background */
+      box-shadow: 0 4px 2px -2px gray;
+    }
+  
+    .navbar-brand img {
+      filter: brightness(0) invert(1);
+    }
+  
+    .navbar-light .navbar-nav .nav-link {
+      color: #ffffff;
+    }
+  
+    .btn-outline-success:hover {
+      background-color: #1db954;
+      /* Spotify green */
+      color: #ffffff;
+    }
+  
+    .btn {
+      background-color: #1db954;
+      /* Spotify green */
+      color: white;
+    }
+  
+    h1,
+    h2,
+    h3,
+    p {
+      color: #ffffff;
+    }
+  
+    /* Customize card styles for a Spotify-like UI */
+    .card {
+      background-color: #181818;
+      /* Dark card background */
+      color: #ffffff;
+      border: none;
+      transition: transform 0.3s ease-in-out;
+    }
+  
+    .card:hover {
+      transform: scale(1.05);
+    }
+  
+    .card img {
+      max-height: 200px;
+      /* Adjust as needed */
+      object-fit: cover;
+    }
+  
+    /* Media Query for responsiveness */
+    @media (max-width: 768px) {
+      /* Adjust styles for smaller screens */
+    }
+  </style>
+
+  <script>
+    function displayLogoutAlert() {
+      var message = "You have been logged out.";
+      alert(message);
+    }
+  </script>
+</head>
+
+<nav class="navbar navbar-expand-lg bg-custom navbar-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#"><img src="boxes.svg" height="30" alt="box icon" /></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+        <li class="nav-item">
+          {% if current_user.is_authenticated %}
+          <!-- Show logout button if the user is logged in -->
+          <form action="{{ url_for('logout') }}" method="post">
+            <button type="submit" class="btn btn-danger" formmethod="post" onclick="displayLogoutAlert()">
+              Logout
+            </button>
+          </form>
+          {% else %}
+          <!-- Show login button if the user is not logged in -->
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
+            Login
+          </button>
+          {% endif %}
+        </li>
+      </ul>
+
+      <form class="d-flex" role="search">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<body>
+  <main>
+    <div class="position-relative overflow-hidden p-3 p-md-5 m-md-3 text-center bg-body-tertiary">
+      <div class="col-md-6 p-lg-5 mx-auto my-5">
+        <h1 class="display-3 fw-bold">Name of Something</h1>
+        <h3 class="fw-normal text-muted mb-3">Manage your music</h3>
+        <div class="d-flex gap-3 justify-content-center lead fw-normal">
+          <a class="icon-link" href="makePlaylist.html">
+            Make a playlist
+            <svg class="bi">
+              <use xlink:href="#chevron-right"></use>
+            </svg>
+          </a>
+          <a class="icon-link" href="#">
+            Find songs
+            <svg class="bi">
+              <use xlink:href="#chevron-right"></use>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="product-device shadow-sm d-none d-md-block"></div>
+      <div class="product-device product-device-2 shadow-sm d-none d-md-block"></div>
+    </div>
+
+    <div class="d-md-flex flex-md-equal w-100 my-md-3 ps-md-3 col-md-6">
+      <div class="text-bg-dark me-md-3 pt-3 px-3 pt-md-5 col-md-6 px-md-5 text-center overflow-hidden">
+        <div class="my-3 py-3">
+          <h2 class="display-5">Another headline</h2>
+          <p class="lead">And an even wittier subheading.</p>
+        </div>
+        <div class="bg-body-tertiary shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0">
+        </div>
+      </div>
+      <div class="bg-body-tertiary me-md-3 pt-3 px-3 pt-md-5 col-md-6 px-md-5 text-center overflow-hidden">
+        <div class="my-3 p-3">
+          <h2 class="display-5">Another headline</h2>
+          <p class="lead">And an even wittier subheading.</p>
+        </div>
+        <div class="bg-dark shadow-sm mx-auto" style="width: 80%; height: 300px; border-radius: 21px 21px 0 0"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- The login modal -->
+  {% include 'login.html' %}
+
+  <!-- The signup modal -->
+  {% include 'signup.html' %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      var message = {{ messages[0][1]|tojson|safe }};
+      alert(message);
+    {% endif %}
+  {% endwith %}
+
+  <!-- Bootstrap scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
