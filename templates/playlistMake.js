@@ -1,84 +1,110 @@
+$(document).ready(function () {
 
-songNames = ["Thunder", "Rawr", "Yup", "FSU Fight Song", "National Anthem"]
+  // Define songNames array
+  var songNames = ["Thunder", "Rawr", "Yup", "FSU Fight Song", "National Anthem"];
 
-//basic song object
-function SongObject(songName, artist, indexNum) {
-  this.songName = songName;
-  this.artist = artist;
-  this.indexNum = indexNum;
-} 
-//use a for loop to make song object array
-//var song1 = new SongObject("Sams Song", "Jason", 1);
+  // Define playlist array
+  var playlists = [];
 
+  // Load songs and playlists
+  loadSongs();
+  loadPlaylists();
 
-//when the + button is clicked add song to playlists by id = songLibrary#
-function addSongToPlayList(button) {
-    
-    var element = $(button).attr("id"); //gets the divs index
-    $(button).attr("onclick","removeSongFromPlaylist(this)");
-    
-    var songDiv = $("#songLibrary" + element).prop('outerHTML');//gets the whole song div
-    
-    $("#songLibrary" + element).remove();//deletes
-    
-    var newPlaylistSong = changeCharacter(songDiv, '+', '-'); //changes the btn from a + to -
-    //todo add newSong to active playlists
-    $(document).ready(function() {
-        var accordionElement = $('.accordionContainer.active');
-        accordionElement.find('.content').append(newPlaylistSong);  
-        });
+  // Function to load songs into the songContainer
+  function loadSongs() {
+    for (var i = 0; i < songNames.length; i++) {
+      var songName = songNames[i];
+      var artist = "Sample Artist";
 
-}
+      var songDiv = "<div id='songLibrary" + i + "' class='songShow " + i + "'>" +
+        "<p>" + i + " " + songName + " by: " + artist + "</p>" +
+        "<div class='btnDiv'>" +
+        "<button onclick='addSongToPlaylist(this)' id='" + i + "' class='songBTN'>+</button>" +
+        "</div></div>";
 
-//when - is clicked in the playlist
-function removeSongFromPlaylist(button) {
-    $(button).attr("onclick","addSongToPlayList(this)");
-    var element = $(button).attr("id"); //gets the divs index
-    var songDiv = $("#songLibrary" + element).prop('outerHTML');//gets the whole song div
-    $("#songLibrary" + element).remove();//deletes
-    var newPlaylistSong = changeCharacter(songDiv, '-', '+'); //changes the btn from a + to -
-    $(".songContainer").prepend(newPlaylistSong);
-
-}
-
-function changeCharacter(str, oldCharacter, newCharacter) {
-    
-    var strArray = str.split('');
-    for (var i = 0; i < strArray.length; i++) {
-        if (strArray[i] === oldCharacter) {
-            strArray[i] = newCharacter;
-           
-            return strArray.join('');
-        }
+      $(".songContainer").append(songDiv);
     }
-    return str;
-}
+  }
 
-//loads in songs
-for(var i = 0; i < 200; i++) {
-    let SongName = "Sams Song";
-    let Artist = "Sam";
+  // Function to load playlists into the playlistContainer
+  function loadPlaylists() {
+    for (var i = 0; i < 10; i++) {
+      var label = "Playlist " + i;
 
-    $(".songContainer").append("<div id='songLibrary" + i + "' class='songShow " + i + "'><p>" + i +" " + SongName + "by:" + Artist + "</p><div class='btnDiv'><button onclick='addSongToPlayList(this)' id='" + i + "' class='songBTN'>+</button></div></div>");
+      $('#playlistContainer').append("<div id='playlist" + i + "' class='accordionContainer'>" +
+        "<div class='label'>" + label + "</div>" +
+        "<div class='content'></div></div><hr>");
 
-}
+      playlists.push([]); // Initialize an empty array for each playlist
+    }
+  }
 
-//loads playlists
-for(var i = 0; i < 10;i++) {
-    let content = "";
-    let label = "Wtf"  + i;
-    $('#playlistContainer').append("<div id='playlist" + i + "' class='accordionContainer'><div class='label'>" + label + "</div><div class='content'>Test</div></div><hr>");
-}
+  // Function to add a song to a playlist
+  window.addSongToPlaylist = function (button) {
+    var element = $(button).attr("id"); //gets the divs index
+    var songIndex = parseInt(element);
 
+    // Find the active playlist
+    var activePlaylistIndex = findActivePlaylistIndex();
+    if (activePlaylistIndex !== -1) {
+      // Add the song to the active playlist
+      playlists[activePlaylistIndex].push(new SongObject(songNames[songIndex], "Sample Artist", songIndex));
 
-const accordion = document.getElementsByClassName('accordionContainer');
+      // Update the playlist content
+      updatePlaylistContent(activePlaylistIndex);
+    }
+  };
 
-for (i=0; i<accordion.length; i++) {
-  accordion[i].addEventListener('click', function () {
-    this.classList.toggle('active')
+  // Function to update the content of the active playlist
+  function updatePlaylistContent(playlistIndex) {
+    var playlistContent = playlists[playlistIndex].map(function (song) {
+      return "<div class='songShow'>" +
+        "<p>" + song.songName + " by: " + song.artist + "</p>" +
+        "<div class='btnDiv'>" +
+        "<button onclick='removeSongFromPlaylist(this)' id='" + song.indexNum + "' class='songBTN'>-</button>" +
+        "</div></div>";
+    }).join('');
 
-  })
-}
+    $(".accordionContainer#playlist" + playlistIndex + " .content").html(playlistContent);
+  }
+
+  // Function to find the index of the active playlist
+  function findActivePlaylistIndex() {
+    for (var i = 0; i < accordion.length; i++) {
+      if (accordion[i].classList.contains('active')) {
+        return i;
+      }
+    }
+    return -1; // Return -1 if no active playlist is found
+  }
+
+  // Function to remove a song from a playlist
+  window.removeSongFromPlaylist = function (button) {
+    var element = $(button).attr("id"); //gets the song index
+    var songIndex = parseInt(element);
+
+    // Find the active playlist
+    var activePlaylistIndex = findActivePlaylistIndex();
+    if (activePlaylistIndex !== -1) {
+      // Remove the song from the active playlist
+      playlists[activePlaylistIndex] = playlists[activePlaylistIndex].filter(function (song) {
+        return song.indexNum !== songIndex;
+      });
+
+      // Update the playlist content
+      updatePlaylistContent(activePlaylistIndex);
+    }
+  };
+
+  // Function to toggle the active state of the accordion container
+  function toggleActiveState() {
+    $(this).toggleClass('active');
+  }
+
+  // Add event listener to each accordion container
+  $('.accordionContainer').click(toggleActiveState);
+
+});
 
 
 /*

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-content">
+    <h2>Create Playlist</h2>
+    <form method="post" action="{{ url_for('create_playlist') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Create Playlist</button>
+    </form>
+
+    <button id="createPlaylistButton">Create Playlist (Client-Side)</button>
+</div>
+
+<script>
+    document.getElementById('createPlaylistButton').addEventListener('click', function () {
+        fetch('/add_playlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: '{{ current_user.get_id() }}',  // Access user_id from the current_user object
+                playlist_name: yourPlaylistNameVariable,
+            }),
+        })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+    });
+</script>
+{% endblock %}

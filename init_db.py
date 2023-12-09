@@ -15,10 +15,10 @@ from getpass import getpass
 app = Flask(__name__)
 
 def protect_db():
-    username = "jacobjanzen11"#input("\nEnter DB Username: ")
-    password = "!4WeLoveJesus!"#getpass("\nEnter DB Password: ")
-    host = "localhost"#input("\nEnter DB Host Name: ")
-    db_path = "music"#input("\nEnter name of DB: ")
+    username = input("\nEnter DB Username: ")
+    password = getpass("\nEnter DB Password: ")
+    host = input("\nEnter DB Host Name: ")
+    db_path = input("\nEnter name of DB: ")
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -26,7 +26,7 @@ def protect_db():
 # Execute the SQL script to create tables
 def initialize_database():
     with app.app_context():
-        with open('application/createDB.sql', 'r') as script_file:
+        with open('createDB.sql', 'r') as script_file:
             script = script_file.read()
 
         # Explicitly declare the script as text
@@ -49,8 +49,4 @@ def initialize_database():
 if __name__ == '__main__':
     protect_db()
     db = SQLAlchemy(app)
-    initialize_database()
-
-
-if __name__ == '__main__':
     initialize_database()

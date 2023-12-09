@@ -5,19 +5,20 @@
 # Project: DB MGMT Final Project
 # Author: Jacob Janzen
 # Last Updated: 12/2/23
+# realtimecolors.com
 #
 ###########################################################
 
-from flask import Flask, render_template, send_file, request, redirect, url_for, flash
+from flask import Flask, render_template, send_file, request, redirect, url_for, flash, current_app, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user
 from sqlalchemy import func
-from sqlalchemy.orm import synonym
 from werkzeug.security import check_password_hash, generate_password_hash
 from getpass import getpass
 from datetime import datetime
 from dotenv import load_dotenv
 import os
+from db_models import *
 
 
 app = Flask(__name__)
@@ -30,10 +31,15 @@ login_manager.login_view = 'login'
 
 
 def protect_db():
-    username = input("\nEnter DB Username: ")
-    password = getpass("\nEnter DB Password: ")
-    host = input("\nEnter DB Host Name: ")
-    db_path = input("\nEnter name of DB: ")
+    # username = input("\nEnter DB Username: ")
+    # password = getpass("\nEnter DB Password: ")
+    # host = input("\nEnter DB Host Name: ")
+    # db_path = input("\nEnter name of DB: ")
+    
+    username = "jacobjanzen11"#input("\nEnter DB Username: ")
+    password = "!4WeLoveJesus!"#getpass("\nEnter DB Password: ")
+    host = "localhost"#input("\nEnter DB Host Name: ")
+    db_path = "music"#input("\nEnter name of DB: ")
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
@@ -43,23 +49,62 @@ def protect_db():
 protect_db()
 db = SQLAlchemy(app)
 
-# User model for Flask-Login
-class User(UserMixin, db.Model):
-    __tablename__ = 'User'
-    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uname = db.Column(db.String(255), unique=True, nullable=False)
-    username = synonym('uname')
-    password = db.Column(db.String(255), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    dateJoin = db.Column(db.DateTime)
-    
-    def get_id(self):
-        return str(self.ID)
-
 # pushes application context, so tables are generated inside it
 # generate all defined db tables: User
 app.app_context().push()
 db.create_all()
+
+
+def add_playlist(user_id, playlist_name):
+    try:
+        # Check if the user exists
+        user_exists = db.session.query(User.query.filter_by(ID=user_id).exists()).scalar()
+
+        if user_exists:
+            # Create a new playlist entry
+            playlist = Playlist(name=playlist_name)
+            db.session.add(playlist)
+            db.session.commit()
+
+            # Associate the playlist with the user
+            owned_playlist = Owned(userID=user_id, playlistID=playlist.ID, name=playlist_name)
+            db.session.add(owned_playlist)
+            db.session.commit()
+
+            app.logger.info(f"Playlist '{playlist_name}' added successfully for user {user_id}")
+            return True, "Playlist added successfully"
+        else:
+            app.logger.warning(f"User {user_id} does not exist")
+            return False, "User does not exist"
+
+    except Exception as e:
+        app.logger.error(f"Error adding playlist: {str(e)}")
+        return False, "An error occurred while adding the playlist"
+    
+
+def add_song(song_name, artist_name, playlist_id, order):
+    try:
+        # Check if the playlist exists
+        playlist_exists = db.session.query(Playlist.query.filter_by(ID=playlist_id).exists()).scalar()
+
+        if playlist_exists:
+            # Create a new song entry
+            song = Song(name=song_name, artist=artist_name, order=order)
+            db.session.add(song)
+            db.session.commit()
+
+            # Associate the song with the playlist
+            playlist = Playlist.query.get(playlist_id)
+            playlist.songs.append(song)
+            db.session.commit()
+
+            return True, "Song added to playlist successfully"
+        else:
+            return False, "Playlist does not exist"
+
+    except Exception as e:
+        current_app.logger.error(str(e))
+        return False, "An error occurred while adding the song to the playlist"
 
 # Initialize Flask-Login
 @login_manager.user_loader
@@ -160,6 +205,52 @@ def logout():
     logout_user()
     flash('You have been logged out', 'info')
     return redirect(url_for('home'))
+
+
+@app.route('/song_ui')
+def song_ui():
+    return render_template('playlistMake.html')
+
+
+# Route for adding a playlist
+@app.route('/add_playlist', methods=['POST'])
+def add_playlist():
+    data = request.get_json()
+
+    user_id = data.get('user_id')
+    playlist_name = data.get('playlist_name')
+
+    success, message = add_playlist(user_id, playlist_name)
+
+    return jsonify({"success": success, "message": message})
+
+
+@app.route('/add_song', methods=['POST'])
+def route_add_song():
+    data = request.get_json()
+
+    song_name = data.get('song_name')
+    artist_name = data.get('artist_name')
+    playlist_id = data.get('playlist_id')
+    order = data.get('order')
+
+    success, message = add_song(song_name, artist_name, playlist_id, order)
+
+    return jsonify({"success": success, "message": message})
+
+@app.route('/user_playlists/<int:user_id>')
+def user_playlists(user_id):
+    # Get the user's playlists from the database
+    user_playlists = Owned.query.filter_by(userID=user_id).all()
+    
+    return render_template('user_playlists.html', user_playlists=user_playlists)
+
+@app.route('/playlist_make')
+def playlist_make():
+    # Get the user's playlists from the database (you may need to pass user_id)
+    user_playlists = Owned.query.filter_by(userID=user_id).all()
+    
+    return render_template('playlistMake.html', user_playlists=user_playlists)
 
 
 # if main, run app with debug
