@@ -11,14 +11,17 @@
 
 from flask import Flask, render_template, send_file, request, redirect, url_for, flash, current_app, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
 from sqlalchemy import func
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqlalchemy.orm import synonym
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
 from getpass import getpass
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from db_models import *
+# from db_models import *
 
 
 app = Flask(__name__)
@@ -53,6 +56,54 @@ db = SQLAlchemy(app)
 # generate all defined db tables: User
 app.app_context().push()
 db.create_all()
+
+
+# User model for Flask-Login
+class User(UserMixin, db.Model):
+    __tablename__ = 'User'
+    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    uname = db.Column(db.String(255), unique=True, nullable=False)
+    username = synonym('uname')
+    password = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    dateJoin = db.Column(db.DateTime)
+    
+    def get_id(self):
+        return str(self.ID)
+    
+
+class Playlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    songs = db.relationship('Song', backref='playlist', lazy=True)
+
+
+class Song(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    artist = db.Column(db.String(255))
+    playlist_id = db.Column(db.Integer, db.ForeignKey('playlist.id'), nullable=False)
+    
+
+class PlaylistForm(FlaskForm):
+    name = StringField('Playlist Name', render_kw={'placeholder': 'Enter playlist name'})
+    submit = SubmitField('Create Playlist')
+
+
+class SongForm(FlaskForm):
+    name = StringField('Song Name', render_kw={'placeholder': 'Enter song name'})
+    artist = StringField('Artist', render_kw={'placeholder': 'Enter artist name'})
+    submit = SubmitField('Add Song')
+    
+    
+class Owned(db.Model):
+    __tablename__ = 'Owned'
+    userID = db.Column(db.Integer, db.ForeignKey('User.ID'), primary_key=True)
+    playlistID = db.Column(db.Integer, db.ForeignKey('Playlist.id'), primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"<Owned(userID={self.userID}, playlistID={self.playlistID}, name={self.name})>"
 
 
 def add_playlist(user_id, playlist_name):
@@ -225,6 +276,26 @@ def add_playlist():
     return jsonify({"success": success, "message": message})
 
 
+@app.route('/create_playlist', methods=['GET', 'POST'])
+def create_playlist():
+    form = PlaylistForm()
+
+    if form.validate_on_submit():
+        playlist_name = form.name.data
+        user_id = current_user.get_id()  # Assuming you have a current_user object
+
+        success, message = add_playlist(user_id, playlist_name)
+
+        if success:
+            flash('Playlist created successfully!', 'success')
+        else:
+            flash(f'Error creating playlist: {message}', 'danger')
+
+        return redirect(url_for('home'))  # Redirect to the home page after form submission
+
+    return render_template('create_playlist.html', form=form)
+
+
 @app.route('/add_song', methods=['POST'])
 def route_add_song():
     data = request.get_json()
@@ -238,6 +309,7 @@ def route_add_song():
 
     return jsonify({"success": success, "message": message})
 
+
 @app.route('/user_playlists/<int:user_id>')
 def user_playlists(user_id):
     # Get the user's playlists from the database
@@ -245,15 +317,21 @@ def user_playlists(user_id):
     
     return render_template('user_playlists.html', user_playlists=user_playlists)
 
+
 @app.route('/playlist_make')
 def playlist_make():
-    # Get the user's playlists from the database (you may need to pass user_id)
-    user_playlists = Owned.query.filter_by(userID=user_id).all()
-    
-    return render_template('playlistMake.html', user_playlists=user_playlists)
+    # Check if the user is logged in
+    if current_user.is_authenticated:
+        user_id = current_user.get_id()
+        user_playlists = Owned.query.filter_by(userID=user_id).all()
+        return render_template('create_playlist.html', user_playlists=user_playlists)
+    else:
+        # Handle the case when the user is not logged in
+        pass
 
 
 # if main, run app with debug
+# set debug to False before prod for security reasons
 if __name__ == '__main__':
     app.run(debug=True)
     

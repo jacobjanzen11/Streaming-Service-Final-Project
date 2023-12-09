@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 from getpass import getpass
 import os
 
+# *** THIS FILE IS DEPRECATED AS OF NOW ***#
+# *** IF INCLUDED IN FLASK_APP.PY LOGIN BUTTON FUNCTIONALITY WILL FAIL *** #
 
 app = Flask(__name__)
 

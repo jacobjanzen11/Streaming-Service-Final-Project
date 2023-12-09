@@ -7,7 +7,7 @@
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control") }}
+            {{ form.name(class="form-control", id="playlistName") }}
         </div>
         <button type="submit" class="btn btn-primary">Create Playlist</button>
     </form>
@@ -17,14 +17,17 @@
 
 <script>
     document.getElementById('createPlaylistButton').addEventListener('click', function () {
+        // Get the playlist name from the input field
+        var playlistName = document.getElementById('playlistName').value;
+
         fetch('/add_playlist', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                user_id: '{{ current_user.get_id() }}',  // Access user_id from the current_user object
-                playlist_name: yourPlaylistNameVariable,
+                user_id: '{{ current_user.get_id() }}',
+                playlist_name: playlistName,
             }),
         })
             .then(response => response.json())

@@ -3,15 +3,6 @@
 {% block content %}
 
 <body style="background-color: #111010;">
-  <!-- <div id="bigContainer">
-    <div class="songContainer">
-      asjkhd 
-    </div>
-    <div id="playlistContainer" class="accordion col-12">
-      
-    </div>
-  </div> -->
-
   <h1>Create Playlist</h1>
 
   <!-- Display User Playlists -->
@@ -22,12 +13,7 @@
     {% endfor %}
   </ul>
 
-  <!-- Create Playlist Form -->
-  <form method="post" action="{{ url_for('add_playlist') }}">
-    <label for="playlist_name">Playlist Name:</label>
-    <input type="text" name="playlist_name" id="playlist_name" required>
-    <button type="submit">Create Playlist</button>
-  </form>
+  {% include 'create_playlist.html' %}
 
   <!-- The login modal -->
   {% include 'login.html' %}
