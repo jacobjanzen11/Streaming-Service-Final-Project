@@ -12,9 +12,9 @@
 from flask import Flask, render_template, send_file, request, redirect, url_for, flash, current_app, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
-from sqlalchemy import func
+from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey
 from werkzeug.security import check_password_hash, generate_password_hash
-from sqlalchemy.orm import synonym
+from sqlalchemy.orm import synonym, relationship, declarative_base
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from getpass import getpass
@@ -26,6 +26,7 @@ import os
 
 app = Flask(__name__)
 
+Base = declarative_base()
 load_dotenv('.env.dev')
 app.config['SECRET_KEY'] = os.environ.get('PERSONAL_FLASK_SECRET_KEY'), os.urandom(24) 
 
@@ -58,31 +59,101 @@ app.app_context().push()
 db.create_all()
 
 
-# User model for Flask-Login
-class User(UserMixin, db.Model):
+class User(UserMixin, Base):
     __tablename__ = 'User'
-    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uname = db.Column(db.String(255), unique=True, nullable=False)
+    
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    uname = Column(String(255), unique=True, nullable=False)
     username = synonym('uname')
-    password = db.Column(db.String(255), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    dateJoin = db.Column(db.DateTime)
+    password = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
+    dateJoin = Column(DateTime)
     
     def get_id(self):
         return str(self.ID)
     
+    playlists = relationship('Playlist', secondary='Owned', back_populates='owners')
+    
 
-class Playlist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    songs = db.relationship('Song', backref='playlist', lazy=True)
+class Artist(Base):
+    __tablename__ = 'Artist'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    followerCount = Column(Integer)
+    dateJoin = Column(DateTime)
+
+    songs = relationship('Song', back_populates='artist')
+    albums = relationship('Album', back_populates='artist')
+
+    def __repr__(self):
+        return f"<Artist(name={self.name}, followerCount={self.followerCount})>"    
+    
+
+class Album(Base):
+    __tablename__ = 'Album'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    artist_id = Column(Integer, ForeignKey('Artist.ID'), nullable=False)
+    release_date = Column(DateTime)
+
+    artist = relationship('Artist', back_populates='albums')
+    songs = relationship('Song', back_populates='album')
+
+    def __repr__(self):
+        return f"<Album(name={self.name}, artist_id={self.artist_id})>"
+  
+    
+class Song(Base):
+    __tablename__ = 'Song'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    artist_id = Column(Integer, ForeignKey('Artist.ID'), nullable=False)
+    album_id = Column(Integer, ForeignKey('Album.ID'), nullable=False)
+    release = Column(DateTime)
+    genre = Column(String(255))
+    listens = Column(Integer)
+    length = Column(Integer)  # in seconds
+    filepath = Column(String(255))
+
+    artist = relationship('Artist', back_populates='songs')
+    album = relationship('Album', back_populates='songs')
+    playlists = relationship('Playlist', secondary='PlaylistSong', back_populates='songs')
+
+    def __repr__(self):
+        return f"<Song(name={self.name}, artist_id={self.artist_id}, album_id={self.album_id})>"
 
 
-class Song(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    artist = db.Column(db.String(255))
-    playlist_id = db.Column(db.Integer, db.ForeignKey('playlist.id'), nullable=False)
+class PlaylistSong(Base):
+    __tablename__ = 'PlaylistSong'
+    playlist_id = Column(Integer, ForeignKey('Playlist.ID'), primary_key=True)
+    song_id = Column(Integer, ForeignKey('Song.ID'), primary_key=True)
+    song_order = Column(Integer)
+
+    playlist = relationship('Playlist', back_populates='playlist_songs', foreign_keys=[playlist_id])
+    song = relationship('Song', back_populates='playlists', foreign_keys=[song_id])
+
+
+class Playlist(Base):
+    __tablename__ = 'Playlist'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+
+    playlist_songs = relationship('PlaylistSong', back_populates='playlist')
+    owners = relationship('User', secondary='Owned', back_populates='playlists')
+    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists')
+
+    def __repr__(self):
+        return f"<Playlist(name={self.name})>"
+
+
+class Owned(Base):
+    __tablename__ = 'Owned'
+    user_id = Column(Integer, ForeignKey('User.ID'), primary_key=True)
+    playlist_id = Column(Integer, ForeignKey('Playlist.ID'), primary_key=True)
+    name = Column(String(255), nullable=False)
+
+    user = relationship('User', back_populates='playlists')
+    playlist = relationship('Playlist', back_populates='owners')
     
 
 class PlaylistForm(FlaskForm):
@@ -94,22 +165,12 @@ class SongForm(FlaskForm):
     name = StringField('Song Name', render_kw={'placeholder': 'Enter song name'})
     artist = StringField('Artist', render_kw={'placeholder': 'Enter artist name'})
     submit = SubmitField('Add Song')
-    
-    
-class Owned(db.Model):
-    __tablename__ = 'Owned'
-    userID = db.Column(db.Integer, db.ForeignKey('User.ID'), primary_key=True)
-    playlistID = db.Column(db.Integer, db.ForeignKey('Playlist.id'), primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-
-    def __repr__(self):
-        return f"<Owned(userID={self.userID}, playlistID={self.playlistID}, name={self.name})>"
 
 
 def add_playlist(user_id, playlist_name):
     try:
         # Check if the user exists
-        user_exists = db.session.query(User.query.filter_by(ID=user_id).exists()).scalar()
+        user_exists = db.session.query(db.session.query(User).filter_by(ID=user_id).exists()).scalar()
 
         if user_exists:
             # Create a new playlist entry
@@ -131,6 +192,7 @@ def add_playlist(user_id, playlist_name):
     except Exception as e:
         app.logger.error(f"Error adding playlist: {str(e)}")
         return False, "An error occurred while adding the playlist"
+
     
 
 def add_song(song_name, artist_name, playlist_id, order):
@@ -258,22 +320,27 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route('/song_ui')
-def song_ui():
-    return render_template('playlistMake.html')
+# @app.route('/song_ui')
+# def song_ui():
+#     return render_template('playlistMake.html')
 
 
 # Route for adding a playlist
 @app.route('/add_playlist', methods=['POST'])
-def add_playlist():
-    data = request.get_json()
+def add_playlist_route(user_id, playlist_name):
+    try:
+        data = request.get_json()
 
-    user_id = data.get('user_id')
-    playlist_name = data.get('playlist_name')
+        user_id = data.get('user_id')
+        playlist_name = data.get('playlist_name')
 
-    success, message = add_playlist(user_id, playlist_name)
+        success, message = add_playlist(user_id, playlist_name)
 
-    return jsonify({"success": success, "message": message})
+        return jsonify({"success": success, "message": message})
+    
+    except Exception as e:
+        app.logger.error(f"Error adding playlist: {str(e)}")
+        return False, "An error occurred while adding the playlist"
 
 
 @app.route('/create_playlist', methods=['GET', 'POST'])
@@ -282,18 +349,19 @@ def create_playlist():
 
     if form.validate_on_submit():
         playlist_name = form.name.data
-        user_id = current_user.get_id()  # Assuming you have a current_user object
+        user_id = current_user.get_id() 
 
         success, message = add_playlist(user_id, playlist_name)
 
         if success:
             flash('Playlist created successfully!', 'success')
+            return redirect(url_for('playlistMake'))  # Redirect to the home page after form submission
         else:
             flash(f'Error creating playlist: {message}', 'danger')
 
-        return redirect(url_for('home'))  # Redirect to the home page after form submission
-
-    return render_template('create_playlist.html', form=form)
+    # Debug print statement
+    print("\nRendering create_playlist.html with form:", form)
+    return render_template('playlistMake.html', form=form)
 
 
 @app.route('/add_song', methods=['POST'])
@@ -318,13 +386,13 @@ def user_playlists(user_id):
     return render_template('user_playlists.html', user_playlists=user_playlists)
 
 
-@app.route('/playlist_make')
-def playlist_make():
+@app.route('/playlistMake')
+def playlistMake():
     # Check if the user is logged in
     if current_user.is_authenticated:
         user_id = current_user.get_id()
         user_playlists = Owned.query.filter_by(userID=user_id).all()
-        return render_template('create_playlist.html', user_playlists=user_playlists)
+        return render_template('playlistMake.html', user_playlists=user_playlists)
     else:
         # Handle the case when the user is not logged in
         pass
