@@ -25,4 +25,4 @@ Get the songs information.
 Getting the song names, genre, and other information will allow the application to display the songs and all their information. 
 Get albums information
 
-Add playlist to user
+add playlist to user
