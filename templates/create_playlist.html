@@ -3,16 +3,14 @@
 {% block content %}
 <div class="main-content">
     <h2>Create Playlist</h2>
-    <form method="post" action="{{ url_for('create_playlist') }}">
+    <form id="createPlaylistForm" method="post" action="{{ url_for('add_playlist_route') }}">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.name.label(class="form-label") }}
             {{ form.name(class="form-control", id="playlistName") }}
         </div>
-        <button type="submit" class="btn btn-primary">Create Playlist</button>
+        <button id="createPlaylistButton" type="button" class="btn btn-primary">Create Playlist</button>
     </form>
-
-    <button id="createPlaylistButton">Create Playlist (Client-Side)</button>
 </div>
 
 <script>
@@ -30,9 +28,30 @@
                 playlist_name: playlistName,
             }),
         })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
     });
+
+    // Add this line to set the content type for the form submission
+    document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+        var playlistName = document.getElementById('playlistName').value;
+
+        fetch('/add_playlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: '{{ current_user.get_id() }}',
+                playlist_name: playlistName,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+    });
+
 </script>
 {% endblock %}
