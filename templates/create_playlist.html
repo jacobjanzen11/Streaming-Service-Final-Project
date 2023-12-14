@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="main-content">
-    <h2>Create Playlist</h2>
     <form id="createPlaylistForm" method="post" action="{{ url_for('add_playlist_route') }}">
         {{ form.hidden_tag() }}
         <div class="mb-3">

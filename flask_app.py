@@ -14,7 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
 from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey
 from werkzeug.security import check_password_hash, generate_password_hash
-from sqlalchemy.orm import synonym, relationship, declarative_base
+from sqlalchemy.orm import synonym, relationship
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from getpass import getpass
@@ -26,13 +26,11 @@ import os
 
 app = Flask(__name__)
 
-Base = declarative_base()
 load_dotenv('.env.dev')
-app.config['SECRET_KEY'] = os.environ.get('PERSONAL_FLASK_SECRET_KEY'), os.urandom(24) 
+app.config['SECRET_KEY'] = os.environ.get('PERSONAL_FLASK_SECRET_KEY') or os.urandom(24)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
 
 def protect_db():
     # username = input("\nEnter DB Username: ")
@@ -47,19 +45,15 @@ def protect_db():
     
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-            
-
+    
+        
 # ask user for login credentials for db connection
 protect_db()
 db = SQLAlchemy(app)
-
-# pushes application context, so tables are generated inside it
-# generate all defined db tables: User
-app.app_context().push()
-db.create_all()
+db.configure_mappers()
 
 
-class User(UserMixin, Base):
+class User(UserMixin, db.Model):
     __tablename__ = 'User'
     
     ID = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,10 +66,10 @@ class User(UserMixin, Base):
     def get_id(self):
         return str(self.ID)
     
-    playlists = relationship('Playlist', secondary='Owned', back_populates='owners', overlaps="playlists")
+    playlists = relationship('Playlist', secondary='Owned', back_populates='playlists')
     
 
-class Artist(Base):
+class Artist(db.Model):
     __tablename__ = 'Artist'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -89,7 +83,7 @@ class Artist(Base):
         return f"<Artist(name={self.name}, followerCount={self.followerCount})>"    
     
 
-class Album(Base):
+class Album(db.Model):
     __tablename__ = 'Album'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -103,7 +97,7 @@ class Album(Base):
         return f"<Album(name={self.name}, artist_id={self.artist_id})>"
   
     
-class Song(Base):
+class Song(db.Model):
     __tablename__ = 'Song'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
@@ -117,38 +111,46 @@ class Song(Base):
 
     artist = relationship('Artist', back_populates='songs')
     album = relationship('Album', back_populates='songs')
-    playlists = relationship('Playlist', secondary='PlaylistSong', back_populates='songs')
-    playlist_songs = relationship('PlaylistSong', back_populates='song', overlaps="playlists")
+    playlists = relationship('Playlist', secondary='PlaylistSong', back_populates='songs', overlaps='playlists')
+    playlist_songs = relationship('PlaylistSong', back_populates='song', overlaps='playlists')
 
     def __repr__(self):
         return f"<Song(name={self.name}, artist_id={self.artist_id}, album_id={self.album_id})>"
     
 
-class Playlist(Base):
+# class Playlist(db.Model):
+#     __tablename__ = 'Playlist'
+#     ID = Column(Integer, primary_key=True, autoincrement=True)
+#     name = Column(String(255), nullable=False)
+
+#     playlist_songs = relationship('PlaylistSong', back_populates='playlist', cascade='all, delete-orphan', overlaps='playlist')
+#     owners = relationship('User', secondary='Owned', back_populates='playlists')
+#     songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlist_songs', lazy=True)
+
+class Playlist(db.Model):
     __tablename__ = 'Playlist'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
 
     playlist_songs = relationship('PlaylistSong', back_populates='playlist')
     owners = relationship('User', secondary='Owned', back_populates='playlists')
-    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps="playlist_songs,song")
+    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlists', lazy=True)
 
     def __repr__(self):
         return f"<Playlist(name={self.name})>"
     
 
-class PlaylistSong(Base):
+class PlaylistSong(db.Model):
     __tablename__ = 'PlaylistSong'
     playlist_id = Column(Integer, ForeignKey('Playlist.ID'), primary_key=True)
     song_id = Column(Integer, ForeignKey('Song.ID'), primary_key=True)
     song_order = Column(Integer)
 
-    playlist = relationship('Playlist', back_populates='playlist_songs', foreign_keys=[playlist_id], overlaps="playlists")
-    song = relationship('Song', back_populates='playlist_songs', foreign_keys=[song_id])
+    playlist = relationship('Playlist', back_populates='playlist_songs', foreign_keys=[playlist_id], overlaps='playlist_songs')
+    song = relationship('Song', back_populates='playlist_songs', foreign_keys=[song_id], overlaps='playlist_songs')
     
 
-
-class Owned(Base):
+class Owned(db.Model):
     __tablename__ = 'Owned'
     user_id = Column(Integer, ForeignKey('User.ID'), primary_key=True)
     playlist_id = Column(Integer, ForeignKey('Playlist.ID'), primary_key=True)
@@ -332,7 +334,7 @@ def logout():
 
 # Route for adding a playlist
 @app.route('/add_playlist', methods=['POST'])
-def add_playlist_route(user_id, playlist_name):
+def add_playlist_route():
     try:
         data = request.get_json()
 
@@ -345,7 +347,7 @@ def add_playlist_route(user_id, playlist_name):
     
     except Exception as e:
         app.logger.error(f"Error adding playlist: {str(e)}")
-        return False, "An error occurred while adding the playlist"
+        return jsonify({"success": False, "message": "An error occurred while adding the playlist"}), 500
 
 
 @app.route('/create_playlist', methods=['GET', 'POST'])
