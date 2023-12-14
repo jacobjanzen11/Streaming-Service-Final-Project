@@ -66,7 +66,7 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return str(self.ID)
     
-    playlists = relationship('Playlist', secondary='Owned', back_populates='owners', overlaps="playlists")
+    playlists = relationship('Playlist', secondary='Owned', back_populates='playlists')
     
 
 class Artist(db.Model):
@@ -118,14 +118,26 @@ class Song(db.Model):
         return f"<Song(name={self.name}, artist_id={self.artist_id}, album_id={self.album_id})>"
     
 
+# class Playlist(db.Model):
+#     __tablename__ = 'Playlist'
+#     ID = Column(Integer, primary_key=True, autoincrement=True)
+#     name = Column(String(255), nullable=False)
+
+#     playlist_songs = relationship('PlaylistSong', back_populates='playlist', cascade='all, delete-orphan', overlaps='playlist')
+#     owners = relationship('User', secondary='Owned', back_populates='playlists')
+#     songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlist_songs', lazy=True)
+
 class Playlist(db.Model):
     __tablename__ = 'Playlist'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
 
-    playlist_songs = relationship('PlaylistSong', back_populates='playlist', cascade='all, delete-orphan', overlaps='playlist')
+    playlist_songs = relationship('PlaylistSong', back_populates='playlist')
     owners = relationship('User', secondary='Owned', back_populates='playlists')
-    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlist_songs', lazy=True)
+    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlists', lazy=True)
+
+    def __repr__(self):
+        return f"<Playlist(name={self.name})>"
     
 
 class PlaylistSong(db.Model):
