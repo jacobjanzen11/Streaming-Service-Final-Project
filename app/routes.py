@@ -1,154 +1,22 @@
 ##########################################################
 #
 # Program: Create web application framework 
-#           using packages from py library
+#           using Flask and sqlalchemy libraries.
+#           This file only defines the app routes, the
+#           database classes are defined in db_classes.py
 # Project: DB MGMT Final Project
 # Author: Jacob Janzen
-# Last Updated: 12/2/23
-# realtimecolors.com
+# Last Updated: 12/15/23
 #
 ###########################################################
 
-from flask import Flask, render_template, send_file, request, redirect, url_for, flash, current_app, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
-from sqlalchemy import func, Column, Integer, String, DateTime, ForeignKey, create_engine
+from flask import render_template, send_file, request, redirect, url_for, flash, current_app, jsonify
+from flask_login import login_user, login_required, logout_user, current_user
+from sqlalchemy import func, or_
 from werkzeug.security import check_password_hash, generate_password_hash
-from sqlalchemy.orm import synonym, declarative_base, Session
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from getpass import getpass
-# from datetime import datetime
-from dotenv import load_dotenv
-from flask_migrate import Migrate
-import os
-# from db_models import *
-
-
-app = Flask(__name__)
-
-load_dotenv('.env.dev')
-app.config['SECRET_KEY'] = os.environ.get('PERSONAL_FLASK_SECRET_KEY') or os.urandom(24)
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-def protect_db():
-    # username = input("\nEnter DB Username: ")
-    # password = getpass("\nEnter DB Password: ")
-    # host = input("\nEnter DB Host Name: ")
-    # db_path = input("\nEnter name of DB: ")
-    
-    username = "jacobjanzen11"#input("\nEnter DB Username: ")
-    password = "!4WeLoveJesus!"#getpass("\nEnter DB Password: ")
-    host = "localhost"#input("\nEnter DB Host Name: ")
-    db_path = "music"#input("\nEnter name of DB: ")
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://' + username + ':' + password + '@' + host + '/' + db_path
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-        
-# ask user for login credentials for db connection
-protect_db()
-db = SQLAlchemy(app)
-Base = declarative_base()
-migrate = Migrate(app, db)
-
-
-class User(UserMixin, db.Model):
-    __tablename__ = 'User'
-    
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    uname = Column(String(255), unique=True, nullable=False)
-    username = synonym('uname')
-    password = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    dateJoin = Column(DateTime)
-    
-    def get_id(self):
-        return str(self.ID)
-
-class Album(Base):
-    __tablename__ = "album"
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
-    artist_id = Column(Integer, ForeignKey('Artist.ID'))
-    release_date = Column(DateTime)
-
-class Artist(Base):
-    __tablename__ = "Artist"
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
-    followerCount = Column(Integer)
-    dateJoin = Column(DateTime)
-
-class Follow_album(Base):
-    __tablename__ = "follow_album"
-    album = Column(Integer, ForeignKey('Album.ID'), primary_key=True)
-    user = Column(Integer, ForeignKey('User.ID'), primary_key=True)
-
-class User(Base):
-    __tablename__ = "User"
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    uname = Column(String(255), )
-    password = Column(String(255), )
-    name = Column(String(255), )
-    dateJoin = Column(DateTime, )
-
-class Follow_artist(Base):
-    __tablename__ = "follow_artist"
-    artist = Column(Integer, ForeignKey('Artist.ID'), primary_key=True)
-    user = Column(Integer, ForeignKey('User.ID'), primary_key=True)   
-
-class Friend(Base):
-    __tablename__ = "Friend"
-    u1 = Column(Integer, ForeignKey('User.ID'), primary_key=True)
-    u2 = Column(Integer, ForeignKey('User.ID'), primary_key=True)   
-
-class Listen_now(Base):
-    __tablename__ = "listen_now"
-    userID = Column(Integer, ForeignKey('User.ID'), primary_key=True)
-    songID = Column(Integer, ForeignKey('Song.ID'), primary_key=True)
-
-class Owned(Base):
-    __tablename__ = "owned"
-    user_id = Column(Integer, ForeignKey('User.ID'), primary_key=True)
-    playlist_id = Column(Integer, ForeignKey('Playlist.ID'))
-    name = Column(String(255), nullable=False) 
-
-class Playlist(Base):
-    __tablename__ = "Playlist"
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
-
-class Playlist_song(Base):
-    __tablename__ = "playlist_song"
-    playlist_id = Column(Integer, primary_key=True, autoincrement=True)
-    song_id = Column(Integer, ForeignKey('Song.ID'))
-    song_order = Column(Integer)
-
-class Song(Base):
-    __tablename__ = "Song"
-    ID = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
-    artist_id = Column(Integer, ForeignKey('Artist.ID'))
-    album_id = Column(Integer, ForeignKey('Album.ID'))
-    release = Column(DateTime)
-    genre = Column(String(255))
-    listens = Column(Integer)
-    length = Column(Integer)
-    filepath = Column(String(255))
-
-    
-class PlaylistForm(FlaskForm):
-    name = StringField('Playlist Name', render_kw={'placeholder': 'Enter playlist name'})
-    submit = SubmitField('Create Playlist')
-
-
-class SongForm(FlaskForm):
-    name = StringField('Song Name', render_kw={'placeholder': 'Enter song name'})
-    artist = StringField('Artist', render_kw={'placeholder': 'Enter artist name'})
-    submit = SubmitField('Add Song')
+from datetime import datetime
+from models import db, User, Playlist, Owned, Song, PlaylistForm
+from __init__ import app, login_manager
 
 
 def add_playlist(user_id, playlist_name):
@@ -228,7 +96,6 @@ def login():
     return render_template('login.html')
 
 
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -236,10 +103,11 @@ def signup():
             username = request.form.get('username')
             password = request.form.get('password')
             name = request.form.get('name')  # Get the name from the form
-            date_join = DateTime.utcnow()  # Use current UTC time as the dateJoin value
+            date_join = datetime.utcnow()  # Use current local time as the dateJoin value
 
             # Check if the username already exists
-            existing_user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
+            existing_user = User.query.filter(or_(User.username.ilike(username), User.uname.ilike(username))).first()
+            
             if existing_user:
                 flash('Username already exists. Please choose a different username.', 'danger')
                 return redirect(url_for('signup'))
@@ -276,7 +144,7 @@ def login_post():
 
         try:
             # Use case-insensitive comparison for username
-            user = User.query.filter(func.lower(User.uname) == func.lower(username)).first()
+            user = User.query.filter(or_(User.username.ilike(username), User.uname.ilike(username))).first()
 
             # Log the query and query result for debugging
             app.logger.info(f"Query: {str(db.session.query(User).filter(func.lower(User.uname) == func.lower(username)).statement)}")
@@ -309,11 +177,6 @@ def logout():
         flash('You are not logged in', 'warning')
 
     return redirect(url_for('home'))
-
-
-# @app.route('/song_ui')
-# def song_ui():
-#     return render_template('playlistMake.html')
 
 
 # Route for adding a playlist

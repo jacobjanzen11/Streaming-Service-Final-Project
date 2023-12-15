@@ -33,15 +33,15 @@
       </main>
     </div>
 
-    <div class="side-content">
-      <!-- Display a list of playlists -->
+    <!-- <div class="side-content">
+       Display a list of playlists
       {% for playlist in user_playlists %} {# Assuming user_playlists is a variable passed from Flask containing the
       user's playlists #}
       <div class="playlist-item" onclick="loadPlaylist('{{ playlist.name }}')">
         {{ playlist.name }}
       </div>
       {% endfor %}
-    </div>
+    </div> -->
 
     <!-- The login modal -->
     {% include 'login.html' %}

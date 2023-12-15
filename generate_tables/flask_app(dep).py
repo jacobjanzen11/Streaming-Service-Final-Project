@@ -66,7 +66,8 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return str(self.ID)
     
-    playlists = relationship('Playlist', secondary='Owned', back_populates='playlists')
+    playlists = relationship('Playlist', secondary='Owned', back_populates='owners')
+    owned_playlists = relationship('Owned', secondary='Playlist', back_populates='owned_playlists', primaryjoin="User.ID == Owned.user_id", secondaryjoin="Playlist.ID == Owned.playlist_id")
     
 
 class Artist(db.Model):
@@ -116,25 +117,17 @@ class Song(db.Model):
 
     def __repr__(self):
         return f"<Song(name={self.name}, artist_id={self.artist_id}, album_id={self.album_id})>"
-    
 
-# class Playlist(db.Model):
-#     __tablename__ = 'Playlist'
-#     ID = Column(Integer, primary_key=True, autoincrement=True)
-#     name = Column(String(255), nullable=False)
-
-#     playlist_songs = relationship('PlaylistSong', back_populates='playlist', cascade='all, delete-orphan', overlaps='playlist')
-#     owners = relationship('User', secondary='Owned', back_populates='playlists')
-#     songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlist_songs', lazy=True)
 
 class Playlist(db.Model):
     __tablename__ = 'Playlist'
     ID = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
 
-    playlist_songs = relationship('PlaylistSong', back_populates='playlist')
-    owners = relationship('User', secondary='Owned', back_populates='playlists')
-    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', overlaps='playlists', lazy=True)
+    playlist_songs = relationship('PlaylistSong', back_populates='playlist', overlaps="playlist_songs")
+    owners = relationship('User', secondary='Owned', back_populates='owned_playlists')
+    songs = relationship('Song', secondary='PlaylistSong', back_populates='playlists', lazy=True, overlaps="playlist_songs")
+    user = relationship('User', secondary='Owned', back_populates='owned_playlists')
 
     def __repr__(self):
         return f"<Playlist(name={self.name})>"
@@ -156,10 +149,10 @@ class Owned(db.Model):
     playlist_id = Column(Integer, ForeignKey('Playlist.ID'), primary_key=True)
     name = Column(String(255), nullable=False)
 
-    user = relationship('User', back_populates='playlists')
+    user = relationship('User', back_populates='owned_playlists')
     playlist = relationship('Playlist', back_populates='owners')
     
-
+    
 class PlaylistForm(FlaskForm):
     name = StringField('Playlist Name', render_kw={'placeholder': 'Enter playlist name'})
     submit = SubmitField('Create Playlist')
@@ -174,16 +167,16 @@ class SongForm(FlaskForm):
 def add_playlist(user_id, playlist_name):
     try:
         # Check if the user exists
-        user_exists = db.session.query(db.session.query(User).filter_by(ID=user_id).exists()).scalar()
+        user = db.session.query(User).get(user_id)
 
-        if user_exists:
+        if user:
             # Create a new playlist entry
             playlist = Playlist(name=playlist_name)
             db.session.add(playlist)
             db.session.commit()
 
             # Associate the playlist with the user
-            owned_playlist = Owned(userID=user_id, playlistID=playlist.ID, name=playlist_name)
+            owned_playlist = Owned(user_id=user_id, playlist_id=playlist.ID, name=playlist_name)
             db.session.add(owned_playlist)
             db.session.commit()
 
@@ -197,16 +190,15 @@ def add_playlist(user_id, playlist_name):
         app.logger.error(f"Error adding playlist: {str(e)}")
         return False, "An error occurred while adding the playlist"
 
-    
 
-def add_song(song_name, artist_name, playlist_id, order):
+def add_song(song_name, artist_name, playlist_id, song_order):
     try:
         # Check if the playlist exists
         playlist_exists = db.session.query(Playlist.query.filter_by(ID=playlist_id).exists()).scalar()
 
         if playlist_exists:
             # Create a new song entry
-            song = Song(name=song_name, artist=artist_name, order=order)
+            song = Song(name=song_name, artist=artist_name, song_order=song_order)
             db.session.add(song)
             db.session.commit()
 
@@ -322,8 +314,12 @@ def login_post():
 @app.route('/logout', methods=['POST'])
 @login_required
 def logout():
-    logout_user()
-    flash('You have been logged out', 'info')
+    if current_user.is_authenticated:
+        logout_user()
+        flash('You have been logged out', 'info')
+    else:
+        flash('You are not logged in', 'warning')
+
     return redirect(url_for('home'))
 
 
