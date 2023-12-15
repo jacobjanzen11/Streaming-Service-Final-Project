@@ -27,8 +27,4 @@ def protect_db(app):
 # ask user for login credentials for db connection
 protect_db(app)
 db.init_app(app)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
     
