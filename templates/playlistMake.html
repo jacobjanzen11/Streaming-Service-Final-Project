@@ -2,23 +2,23 @@
 
 {% block content %}
 
-<body style="background-color: #111010;">
-  <h1>Create Playlist</h1>
+<body style="background-color: #000000;">
+  <h1 style="color: rgb(255, 255, 255);">Create Playlist</h1>
 
   <!-- Display User Playlists -->
-  <h2>Your Playlists</h2>
+  <!-- <h2>Your Playlists</h2>
   <ul>
     {% for playlist in user_playlists %}
     <li>{{ playlist.name }}</li>
     {% endfor %}
-  </ul>
+  </ul> -->
 
   {% include 'create_playlist.html' %}
 
   <!-- The login modal -->
   {% include 'login.html' %}
 
-  <!-- The signup modal -->
+  <!-- The signup modal  -->
   {% include 'signup.html' %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
