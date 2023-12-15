@@ -2,7 +2,7 @@
 
 # User Guide
     ## Starting the APP ##
-        - Run the run_app.py script to initialize the Flask application
+        - Run the run_app.py script to initialize the Flask application (As of now the app must be run by running python3 app/routes.py)
         - Running the script will automatically print the the link to the local UI in the terminal output
         - Cmd. + Click on the link and you will be redirected to the Ui homepage
 

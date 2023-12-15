@@ -1,9 +1,6 @@
 ##########################################################
 #
-# Program: Create web application framework 
-#           using Flask and sqlalchemy libraries.
-#           This file only defines the app routes, the
-#           database classes are defined in db_classes.py
+# Program: Deines the routes for the flask application
 # Project: DB MGMT Final Project
 # Author: Jacob Janzen
 # Last Updated: 12/15/23
@@ -17,6 +14,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from models import db, User, Playlist, Owned, Song, PlaylistForm
 from __init__ import app, login_manager
+
+### Run the application from this file ###
 
 
 def add_playlist(user_id, playlist_name):

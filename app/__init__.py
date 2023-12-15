@@ -1,3 +1,13 @@
+#######################################################
+#
+# Program: Initializes the flask application
+# Project: DB MGMT Final Project
+# Author: Jacob Janzen
+# Last Updated: 12/15/23
+#
+########################################################
+
+
 from flask import Flask
 from flask_login import LoginManager
 from getpass import getpass
