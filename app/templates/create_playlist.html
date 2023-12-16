@@ -3,10 +3,11 @@
 {% block content %}
 <div class="main-content">
     <form id="createPlaylistForm" method="post" action="{{ url_for('add_playlist_route') }}">
-        {{ form.hidden_tag() }}
+        <!-- Use placeholder for the input field instead of label -->
         <div class="mb-3">
-            {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control", id="playlistName") }}
+            <!-- Add an event listener to hide the placeholder on focus -->
+            <input type="text" class="form-control" id="playlist_name" name="playlist_name" placeholder="Playlist Name" 
+            onfocus="this.placeholder=''" onblur="this.placeholder='Playlist Name'" style="color: rgb(146, 146, 146);">
         </div>
         <button id="createPlaylistButton" type="button" class="btn btn-primary">Create Playlist</button>
     </form>
@@ -15,7 +16,7 @@
 <script>
     document.getElementById('createPlaylistButton').addEventListener('click', function () {
         // Get the playlist name from the input field
-        var playlistName = document.getElementById('playlistName').value;
+        var playlist_name = document.getElementById('playlist_name').value;
 
         fetch('/add_playlist', {
             method: 'POST',
@@ -24,18 +25,26 @@
             },
             body: JSON.stringify({
                 user_id: '{{ current_user.get_id() }}',
-                playlist_name: playlistName,
+                playlist_name: playlist_name,
             }),
         })
         .then(response => response.json())
-        .then(data => console.log(data))
+        .then(data => {
+            console.log(data);
+            
+            // Check if the playlist was successfully created
+            if (data.success) {
+                // Redirect to the add_song page with the playlist_name parameter
+                window.location.href = '/add_song?playlist_name=' + encodeURIComponent(playlist_name);
+            }
+        })
         .catch(error => console.error('Error:', error));
     });
 
     // Add this line to set the content type for the form submission
     document.querySelector('form').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent the default form submission
-        var playlistName = document.getElementById('playlistName').value;
+        var playlist_name = document.getElementById('playlist_name').value;
 
         fetch('/add_playlist', {
             method: 'POST',
@@ -44,11 +53,19 @@
             },
             body: JSON.stringify({
                 user_id: '{{ current_user.get_id() }}',
-                playlist_name: playlistName,
+                playlist_name: playlist_name,
             }),
         })
         .then(response => response.json())
-        .then(data => console.log(data))
+        .then(data => {
+            console.log(data);
+
+            // Check if the playlist was successfully created
+            if (data.success) {
+                // Redirect to the add_song page with the playlist_name parameter
+                window.location.href = '/add_song?playlist_name=' + encodeURIComponent(playlist_name);
+            }
+        })
         .catch(error => console.error('Error:', error));
     });
 

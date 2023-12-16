@@ -1,37 +1,45 @@
-{% extends 'base.html' %}
-
 {% block content %}
 
-<body style="background-color: #000000;">
-  <h1 style="color: rgb(255, 255, 255);">Create Playlist</h1>
+  <body style="background-color: #111010;">
 
-  <!-- Display User Playlists -->
-  <!-- <h2>Your Playlists</h2>
-  <ul>
-    {% for playlist in user_playlists %}
-    <li>{{ playlist.name }}</li>
-    {% endfor %}
-  </ul> -->
+    <!-- <div style="display: flex;flex-wrap: wrap; flex-direction: row;"> -->
+      {% include 'create_playlist.html' %}
 
-  {% include 'create_playlist.html' %}
+    <div class="side-content">
+      <h1 style="color: rgb(255, 255, 255);" class="side-content">Your Playlists</h1>
+      {% for playlist in user_playlists %}
+      <div class="playlist-item" onclick="loadPlaylist('{{ playlist.name }}')">
+        <li>{{ playlist.name }}</li>
+      </div>
+      {% endfor %}
+    </div>
+    <!-- </div> -->
 
-  <!-- The login modal -->
-  {% include 'login.html' %}
+    <!-- The login modal -->
+    {% include 'login.html' %}
 
-  <!-- The signup modal  -->
-  {% include 'signup.html' %}
+    <!-- The signup modal -->
+    {% include 'signup.html' %}
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  var message = {{ messages[0][1]|tojson|safe }};
-  alert(message);
-  {% endif %}
-  {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      var message = {{ messages[0][1]|tojson|safe }};
+      alert(message);
+    {% endif %}
+    {% endwith %}
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-    crossorigin="anonymous"></script>
-  <!-- <script src="playlistMake.js"></script> -->
-</body>
+    <script>
+      // Add a click event listener to the "Create Playlist" button
+      document.getElementById('createPlaylistBtn').addEventListener('click', function () {
+        // Redirect to the Song UI page
+        window.location.href = '{{ url_for("add_song_route") }}';
+      });
+    </script>
+
+    <!-- Bootstrap scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous">
+    </script>
+  </body>
 {% endblock %}

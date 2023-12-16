@@ -3,8 +3,13 @@
 {% block content %}
   <div class="main-content">
     <h2>Add Song</h2>
-    <form method="post" action="{{ url_for('add_song', playlist_id=playlist_id) }}">
+    <form method="post" action="{{ url_for('add_song_route') }}">
       {{ form.hidden_tag() }}
+
+      <!-- Can add hidden input fields for additional information -->
+      <input type="hidden" name="playlist_id" value="{{ playlist_id }}">
+      <input type="hidden" name="song_order" value="{{ song_order }}">
+
       <div class="mb-3">
         {{ form.name.label(class="form-label") }}
         {{ form.name(class="form-control") }}
@@ -16,4 +21,32 @@
       <button type="submit" class="btn btn-primary">Add Song</button>
     </form>
   </div>
+  <script>
+    document.querySelector('form').addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the default form submission
+      var song_name = document.getElementById('song_name').value;
+      var artist_name = document.getElementById('artist_name').value;
+      var playlist_id = document.getElementById('playlist_id').value;
+      var song_order = document.getElementById('song_order').value;
+
+      fetch('/add_song', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          song_name: song_name,
+          artist_name: artist_name,
+          playlist_id: playlist_id,
+          song_order: song_order,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        // Redirect the response as needed
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  </script>
 {% endblock %}

@@ -12,7 +12,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy import func, or_
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-from models import db, User, Playlist, Owned, Song, PlaylistForm
+from models import db, User, Playlist, Owned, Song, PlaylistForm, SongForm
 from __init__ import app, login_manager
 
 ### Run the application from this file ###
@@ -47,6 +47,8 @@ def add_playlist(user_id, playlist_name):
 
 def add_song(song_name, artist_name, playlist_id, song_order):
     try:
+        print(f"Adding song to playlist: {song_name}, {artist_name}, {playlist_id}, {song_order}")
+
         # Check if the playlist exists
         playlist_exists = db.session.query(Playlist.query.filter_by(ID=playlist_id).exists()).scalar()
 
@@ -61,13 +63,17 @@ def add_song(song_name, artist_name, playlist_id, song_order):
             playlist.songs.append(song)
             db.session.commit()
 
+            print("Song added to playlist successfully")
             return True, "Song added to playlist successfully"
         else:
+            print("Playlist does not exist")
             return False, "Playlist does not exist"
 
     except Exception as e:
+        print(f"Error adding the song: {str(e)}")
         current_app.logger.error(str(e))
         return False, "An error occurred while adding the song to the playlist"
+
 
 # Initialize Flask-Login
 @login_manager.user_loader
@@ -189,11 +195,16 @@ def add_playlist_route():
 
         success, message = add_playlist(user_id, playlist_name)
 
-        return jsonify({"success": success, "message": message})
-    
+        if success:
+            # Redirect to the 'add_song' route and pass playlist_name as a query parameter
+            return redirect(url_for('add_song_route', playlist_name=playlist_name))
+        else:
+            return jsonify({"success": success, "message": message})
+
     except Exception as e:
         app.logger.error(f"Error adding playlist: {str(e)}")
         return jsonify({"success": False, "message": "An error occurred while adding the playlist"}), 500
+
 
 
 @app.route('/create_playlist', methods=['GET', 'POST'])
@@ -213,22 +224,50 @@ def create_playlist():
             flash(f'Error creating playlist: {message}', 'danger')
 
     # Debug print statement
-    print("\nRendering create_playlist.html with form:", form)
+    # print("\nRendering create_playlist.html with form:", form)
     return render_template('playlistMake.html', form=form)
 
 
-@app.route('/add_song', methods=['POST'])
-def route_add_song():
-    data = request.get_json()
+# Route for adding a song
+@app.route('/add_song', methods=['GET', 'POST'])
+def add_song_route():
+    if request.method == 'GET':
+        # Handle GET request (e.g., render the form)
+        return render_template('add_song.html', form=SongForm())
 
-    song_name = data.get('song_name')
-    artist_name = data.get('artist_name')
-    playlist_id = data.get('playlist_id')
-    order = data.get('order')
+    if request.method == 'POST':
+        if request.is_xhr:
+            # Handle JSON data (AJAX request)
+            data = request.get_json()
+            song_name = data.get('song_name')
+            artist_name = data.get('artist_name')
+            playlist_id = data.get('playlist_id')
+            song_order = data.get('song_order')
 
-    success, message = add_song(song_name, artist_name, playlist_id, order)
+            # Call add_song function with the provided data
+            success, message = add_song(song_name, artist_name, playlist_id, song_order)
 
-    return jsonify({"success": success, "message": message})
+            return jsonify({"success": success, "message": message})
+
+        else:
+            # Handle form submission
+            form = SongForm(request.form)
+
+            if form.validate():
+                # Get form data
+                song_name = form.name.data
+                artist_name = form.artist.data
+                playlist_id = request.form.get('playlist_id')
+                song_order = request.form.get('song_order') 
+
+                # Cal add_song function with the provided data
+                success, message = add_song(song_name, artist_name, playlist_id, song_order)
+
+                flash(message)
+                return redirect(url_for('add_song_route'))
+
+            flash('Form validation failed')
+            return render_template('add_song.html', form=form)
 
 
 @app.route('/user_playlists/<int:user_id>')
